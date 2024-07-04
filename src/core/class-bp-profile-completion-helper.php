@@ -51,6 +51,9 @@ class BP_Profile_Completion_Helper {
 		$this->register_avatar_actions();
 		$this->register_cover_image_actions();
 
+		add_action( 'bp_media_attachment_uploaded', array($this, 'log_photos_uploaded') );
+
+
 		// Show teh notice.
 		add_action( 'bp_template_redirect', array( $this, 'check_profile_completion_state' ) );
 
@@ -132,6 +135,14 @@ class BP_Profile_Completion_Helper {
 	 */
 	public function log_uploaded( $user_id ) {
 		bp_update_user_meta( $user_id, '_has_avatar', 1 );
+		$this->mark_incomplete_profile( $user_id ); // always force recheck.
+		$this->check_on_update( $user_id );
+	}
+
+
+	public function log_photos_uploaded( $id ) {
+		$attachment = get_post( $id );
+		$user_id = $attachment->post_author;
 		$this->mark_incomplete_profile( $user_id ); // always force recheck.
 		$this->check_on_update( $user_id );
 	}
@@ -350,7 +361,6 @@ class BP_Profile_Completion_Helper {
 	public function has_uploaded_photos( $user_id ) {
 		$has_photos = false;
 
-        $gallery_id = 0;
         $galleries = bp_album_get( ['user_id' => $user_id] );
         foreach ($galleries["albums"] as $gallery) {
 			$medias = bp_media_get( ['album_id' => $gallery->id] )["medias"];
